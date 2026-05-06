@@ -68,6 +68,7 @@ src/
 			TokenBucketRateLimiterTest.java
 capturas/
 	output.png
+	output-bench.png
 pom.xml
 ```
 
@@ -90,6 +91,13 @@ El archivo logback.xml usa MDC para requestId y operation:
 
 ```bash
 mvn -q test
+```
+
+2. Ejecutar benchmarks JMH:
+
+```bash
+mvn -q -DskipTests package
+java -jar target/benchmarks.jar ".*Benchmark"
 ```
 
 ## Pruebas ejecutadas
@@ -137,7 +145,7 @@ Salida de la ejecucion local:
 | -------------------------- | ------------------------------------------------------------------------------------------------ |
 | Implementacion             | Clases en src/main/java/edu/udes/algoritmos/u9 y pruebas en src/test/java/edu/udes/algoritmos/u9 |
 | Funcionalidad y correccion | Todas las pruebas listadas en la seccion Pruebas ejecutadas                                      |
-| Documentacion              | Este README + Javadoc completo en clases principales                                             |
+| Documentacion              | Este README + Javadoc completo en todas las clases publicas                                      |
 | Estilo y convenciones      | Nombres descriptivos, validaciones explicitas y sin credenciales hardcodeadas                    |
 | Entregables                | Proyecto Maven estandar + capturas en carpeta capturas                                           |
 
@@ -147,6 +155,22 @@ Salida de la ejecucion local:
 - Si el Circuit Breaker no pasa a HALF_OPEN, revisar resetTimeoutMs y que exista una nueva llamada luego del timeout.
 - Si el Rate Limiter parece permitir de mas, confirmar el tiempo transcurrido (refill por ms).
 
-## Benchmarks JMH (si la rubrica lo exige)
+## Benchmarks JMH
 
-La guia no incluye benchmarks JMH. Si el evaluador los exige, se agrega un modulo de benchmarks y se incorpora la salida real en esta seccion.
+### Entorno de ejecucion
+
+- SO: Windows 11
+- JDK: 21.0.10 (compatible con el requisito de Java 17+)
+- Modo: Throughput
+- Threads: 1
+
+### Evidencia de ejecucion (JMH)
+
+![Salida JMH](capturas/output-bench.png)
+
+### Resultados JMH
+
+| Benchmark                                  | Metrica            | Resultado     |
+| ------------------------------------------ | ------------------ | ------------- |
+| CircuitBreakerBenchmark.closedSuccess      | Throughput (ops/s) | 497212396,438 |
+| TokenBucketRateLimiterBenchmark.tryAcquire | Throughput (ops/s) | 177457374,717 |
