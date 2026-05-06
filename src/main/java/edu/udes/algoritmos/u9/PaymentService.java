@@ -11,6 +11,14 @@ public class PaymentService {
     private final ObservableOperation observable;
     private final ExternalPaymentGateway gateway;
 
+    /**
+     * Crea el servicio de pagos con sus dependencias.
+     *
+     * @param cb circuit breaker
+     * @param rateLimiter limitador de tasa
+     * @param observable operacion observable
+     * @param gateway gateway externo
+     */
     public PaymentService(
         CircuitBreaker<PaymentResult> cb,
         TokenBucketRateLimiter rateLimiter,
@@ -23,6 +31,14 @@ public class PaymentService {
         this.gateway = Objects.requireNonNull(gateway, "gateway es obligatorio");
     }
 
+    /**
+     * Procesa el pago aplicando rate limiting, observabilidad y circuit breaker.
+     *
+     * @param req solicitud de pago
+     * @return resultado del pago
+     * @throws RateLimitException cuando se supera el limite
+     * @throws CircuitOpenException cuando el circuito esta OPEN
+     */
     public PaymentResult processPayment(PaymentRequest req) {
         if (!rateLimiter.tryAcquire()) {
             throw new RateLimitException("Limite de solicitudes alcanzado");

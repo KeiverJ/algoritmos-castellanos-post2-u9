@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Implementa un circuit breaker con estados CLOSED, OPEN y HALF_OPEN.
+ * Thread-safety: usa atomics para transiciones y contadores.
  *
  * @param <T> tipo de resultado de la operacion protegida
  */
@@ -88,14 +89,12 @@ public class CircuitBreaker<T> {
     }
 
     private State evaluateState() {
-        if (state.get() == State.OPEN) {
-            if (System.currentTimeMillis() - openedAt >= resetTimeoutMs) {
-                if (state.compareAndSet(State.OPEN, State.HALF_OPEN)) {
-                    halfOpenOks.set(0);
-                    metrics.setCircuitBreakerState(2);
-                    log.info("Circuit breaker -> HALF_OPEN");
-                }
-            }
+        if (state.get() == State.OPEN
+            && System.currentTimeMillis() - openedAt >= resetTimeoutMs
+            && state.compareAndSet(State.OPEN, State.HALF_OPEN)) {
+            halfOpenOks.set(0);
+            metrics.setCircuitBreakerState(2);
+            log.info("Circuit breaker -> HALF_OPEN");
         }
         return state.get();
     }
@@ -114,14 +113,13 @@ public class CircuitBreaker<T> {
     }
 
     private void onFailure() {
-        if (failures.incrementAndGet() >= failureThreshold) {
-            if (state.compareAndSet(State.CLOSED, State.OPEN)
-                || state.compareAndSet(State.HALF_OPEN, State.OPEN)) {
-                openedAt = System.currentTimeMillis();
-                openTransitions.incrementAndGet();
-                metrics.setCircuitBreakerState(1);
-                log.warn("Circuit breaker -> OPEN (fallos: {})", failures.get());
-            }
+        if (failures.incrementAndGet() >= failureThreshold
+            && (state.compareAndSet(State.CLOSED, State.OPEN)
+            || state.compareAndSet(State.HALF_OPEN, State.OPEN))) {
+            openedAt = System.currentTimeMillis();
+            openTransitions.incrementAndGet();
+            metrics.setCircuitBreakerState(1);
+            log.warn("Circuit breaker -> OPEN (fallos: {})", failures.get());
         }
     }
 }

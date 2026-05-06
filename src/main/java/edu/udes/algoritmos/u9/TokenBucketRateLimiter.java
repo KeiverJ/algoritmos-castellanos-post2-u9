@@ -2,6 +2,7 @@ package edu.udes.algoritmos.u9;
 
 /**
  * Implementa un rate limiter tipo Token Bucket con sincronizacion interna.
+ * Thread-safety: secciones criticas sincronizadas con un lock dedicado.
  */
 public class TokenBucketRateLimiter {
     private final long capacity;
